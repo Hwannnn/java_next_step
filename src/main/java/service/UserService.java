@@ -20,4 +20,11 @@ public class UserService {
 		User user = new User(userId, password, name, email);
 		UserRepository.getRepository().add(user);
 	}
+	
+	public boolean loginUser(Map<String, String> body) {
+		
+		
+		return false;
+	}
+	
 }

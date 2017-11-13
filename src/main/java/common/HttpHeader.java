@@ -10,7 +10,6 @@ public enum HttpHeader {
 	CONTENT_LENGTH("Content-Length");
 
 	private final String name;
-
 	HttpHeader(String name) {
 		this.name = name;
 	}
