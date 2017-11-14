@@ -6,7 +6,7 @@ package common;
 
 public enum HttpStatus {
 	STATUS_200("200 OK"),
-	STATUS_302("302 DOUNG");
+	STATUS_302("302 FOUNG");
 	
 	private final String statusCode;
 	HttpStatus(String statusCode) {
