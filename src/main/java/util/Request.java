@@ -1,4 +1,4 @@
-package common;
+package util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,6 +8,8 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
+import common.HttpHeader;
+import common.Separator;
 import util.HttpRequestUtils;
 import util.IOUtils;
 import util.LoggerInstanceFactory;
@@ -38,13 +40,15 @@ public class Request {
 	}
 	
 	public int getContentLength() {
-		String contentLength =  header.get(HttpHeader.CONTENT_LENGTH.getName());
-		
+		String contentLength = header.get(HttpHeader.CONTENT_LENGTH.getName());
 		if(contentLength == null) {
 			return 0;
 		}
-	
 		return Integer.parseInt(contentLength);
+	}
+	
+	public String getCookie() {
+		return header.get(HttpHeader.COOKIE.getName());
 	}
 	
 	public String getParameter(String key) {
@@ -58,16 +62,17 @@ public class Request {
 	private void parseRequestHeader(BufferedReader requestBuffer) {
 		try {
 			String headerLine = requestBuffer.readLine();
-			String[] headerInfo = headerLine.split(Separator.WHITESPACE.getValue());
-			
-			this.header.put(HttpHeader.METHOD.getName(), headerInfo[0]);
-			this.header.put(HttpHeader.URL.getName(), headerInfo[1]);
+			parseRequestLine(headerLine);
 			
 			while(StringUtils.equals(headerLine, "") == false) {
 				if(headerLine.startsWith(HttpHeader.CONTENT_LENGTH.getName())) {
 					String contentLength = HttpRequestUtils.parseHeader(headerLine).getValue();
-					
 					this.header.put(HttpHeader.CONTENT_LENGTH.getName(), contentLength);
+					
+				} else if(headerLine.startsWith(HttpHeader.COOKIE.getName())) {
+					String cookieValue = HttpRequestUtils.parseHeader(headerLine).getValue();
+					this.header.put(HttpHeader.COOKIE.getName(), cookieValue);
+					
 				}
 				
 				headerLine = requestBuffer.readLine();
@@ -76,6 +81,14 @@ public class Request {
 		} catch (IOException e) {
 			log.error("BadRequest! Don't include Header Infomation", e);
 		}
+	}
+	
+
+	private void parseRequestLine(String requestLine) {
+		String[] headerInfo = requestLine.split(Separator.WHITESPACE.getValue());
+		
+		this.header.put(HttpHeader.METHOD.getName(), headerInfo[0]);
+		this.header.put(HttpHeader.URL.getName(), headerInfo[1]);
 	}
 	
 	private void parseRequestParameter() {
@@ -101,6 +114,7 @@ public class Request {
 		} catch (IOException e) {
 			log.error("BadRequest! Don't include Body Infomation", e);
 		}
+		
 	}
 
 }

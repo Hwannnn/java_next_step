@@ -7,7 +7,11 @@ package common;
 public enum HttpHeader {
 	METHOD("Method"),
 	URL("Url"),
-	CONTENT_LENGTH("Content-Length");
+	ACCEPT("Accept"),
+	CONTENT_TYPE("Content-Type"),
+	CONTENT_LENGTH("Content-Length"),
+	SET_COOKIE("Set-Cookie"),
+	COOKIE("Cookie");
 
 	private final String name;
 	HttpHeader(String name) {
