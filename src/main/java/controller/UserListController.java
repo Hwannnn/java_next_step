@@ -9,22 +9,21 @@ import util.HttpRequestUtils;
 public class UserListController implements Controller {
 	@Override
 	public String service(Request request, Response response) {
-		String cookies = request.getCookie();
-		String isLogined = HttpRequestUtils.parseCookies(cookies).get("logined");
+		String isLogined = (String) request.getSession().getAttribute("loginId");
 		
-		if (Boolean.parseBoolean(isLogined)) {
-			StringBuilder users = new StringBuilder();
-
-			users.append("<html><head></head><body>");
-			for (User user : DataBase.findAll()) {
-				users.append(user.getUserId() + "/" + user.getName() + "/" + user.getEmail() + "\r\n");	
-			}
-			users.append("</body></html>");
-			
-			return "responseBody:" + users.toString();
+		if (isLogined == null) {
+			return "/user/login.html";
 		}
-		
-		return "/user/login.html";
+
+		StringBuilder users = new StringBuilder();
+
+		users.append("<html><head></head><body>");
+		for (User user : DataBase.findAll()) {
+			users.append(user.getUserId() + "/" + user.getName() + "/" + user.getEmail() + "\r\n");
+		}
+		users.append("</body></html>");
+
+		return "responseBody:" + users.toString();
 	}
 
 }

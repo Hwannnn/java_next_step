@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import common.HttpHeader;
 import common.HttpMethod;
+import util.HttpSession;
 import util.Request;
 import util.Response;
 import db.DataBase;
@@ -29,8 +30,9 @@ public class UserLoginController implements Controller {
 			if(canLoginUser(userId, password) == false) {
 				return "/user/login_failed.html";
 			}
-			
-			response.addHeaders(HttpHeader.SET_COOKIE, "logined=true");
+
+			HttpSession session = request.getSession();
+			session.setAttribute("loginId", userId);
 			
 			return "redirect:/index.html";
 		}

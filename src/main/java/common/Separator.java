@@ -2,6 +2,7 @@ package common;
 
 public enum Separator {
 	WHITESPACE(" "),
+	EQUALS("="),
 	QUESTION_MARK("\\?");
 	
 	private final String value;

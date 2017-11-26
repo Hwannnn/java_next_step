@@ -7,15 +7,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.UUID;
 
-import util.Request;
-import util.Response;
+import common.HttpHeader;
+import common.HttpCookie;
+import common.Separator;
+import util.*;
 import controller.Controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import util.RequestMapping;
 
 public class RequestHandler extends Thread {
 	private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -37,6 +38,13 @@ public class RequestHandler extends Thread {
 		
 			Request request = new Request(requestBuffer);
 			Response response = new Response(responseStream);
+
+			if(request.getCookie(HttpCookie.JSESSIONID.name()) == null) {
+				String uniqueSessionId = UUID.randomUUID().toString();
+
+				HttpSessions.setHttpSession(uniqueSessionId);
+				response.addHeaders(HttpHeader.SET_COOKIE, HttpCookie.JSESSIONID.name() + Separator.EQUALS.getValue() + uniqueSessionId);
+			}
 				
 			service(request, response);
 			
