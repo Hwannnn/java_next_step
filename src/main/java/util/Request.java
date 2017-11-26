@@ -23,15 +23,12 @@ public class Request {
 	private Map<String, String> parameter;
 	private Map<String, String> body;
 
-	private HttpSession session;
 
 	public Request(BufferedReader requestBuffer) {
 		this.header = new HashMap<>();
+		this.cookies = new HashMap<>();
 		this.parameter = new HashMap<>();
 		this.body = new HashMap<>();
-
-		this.cookies = new HashMap<>();
-		this.session = new HttpSession();
 
 		parseRequestHeader(requestBuffer);
 		parseRequestParameter();
