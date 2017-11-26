@@ -1,0 +1,13 @@
+/.settings/
+/target/
+/.classpath
+/.project
+<<<<<<< HEAD
+/tomcat.8080
+/.idea
+jwp-basic.iml
+=======
+/jwp-basic.iml
+/.idea/
+/tomcat.8080/
+>>>>>>> 5f62eb04bbbfdd896c17854f73ba62bebe9d944c
