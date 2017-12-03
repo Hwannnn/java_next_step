@@ -52,7 +52,7 @@
 		</div>
 		<div class="collapse navbar-collapse" id="navbar-collapse2">
 			<ul class="nav navbar-nav navbar-right">
-				<li class="active"><a href="/index.jsp">Posts</a></li>${sessionScope.loginId}
+				<li class="active"><a href="/index.jsp">Posts</a></li>
 				<c:choose>
 					<c:when test="${empty sessionScope.loginId}">
 						<li><a href="/user/loginForm" role="button">로그인</a></li>

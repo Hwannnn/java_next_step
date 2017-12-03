@@ -1,78 +1,58 @@
 package next.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
-import core.jdbc.ConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import core.jdbc.JdbcTemplate;
 import next.model.User;
 
 public class UserDao {
-    public void insert(User user) throws SQLException {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = ConnectionManager.getConnection();
-            String sql = "INSERT INTO USERS VALUES (?, ?, ?, ?)";
-            pstmt = con.prepareStatement(sql);
-            pstmt.setString(1, user.getUserId());
-            pstmt.setString(2, user.getPassword());
-            pstmt.setString(3, user.getName());
-            pstmt.setString(4, user.getEmail());
+	private static final Logger log = LoggerFactory.getLogger(UserDao.class);
+	private JdbcTemplate jdbcTemplate;
+	private ResultMap<User> resultMap = new ResultMap<User>() {
+		@Override
+		public User mappingRow(ResultSet resultSet) throws SQLException {
+			return new User(resultSet.getString("userId"), resultSet.getString("password"), resultSet.getString("name"),
+					resultSet.getString("email"));
+		}
+	};
 
-            pstmt.executeUpdate();
-        } finally {
-            if (pstmt != null) {
-                pstmt.close();
-            }
+	public UserDao() {
+		this.jdbcTemplate = new JdbcTemplate();
+	}
 
-            if (con != null) {
-                con.close();
-            }
-        }
-    }
+	public void insertUser(User user) throws SQLException {
+		String insertQuery = "INSERT INTO users VALUES ('#{userId}', '#{password}', '#{name}', '#{email}')";
 
-    public void update(User user) throws SQLException {
-        // TODO 구현 필요함.
-    }
+		jdbcTemplate.excuteUpdate(insertQuery, user);
+	}
 
-    public List<User> findAll() throws SQLException {
-        // TODO 구현 필요함.
-        return new ArrayList<User>();
-    }
+	public void updateUser(User user) throws SQLException {
+		log.debug("UserDao updateUser {}" + user);
 
-    public User findByUserId(String userId) throws SQLException {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = ConnectionManager.getConnection();
-            String sql = "SELECT userId, password, name, email FROM USERS WHERE userid=?";
-            pstmt = con.prepareStatement(sql);
-            pstmt.setString(1, userId);
+		String updateQuery = "UPDATE users SET password = '#{password}', name = '#{name}', email = '#{email}' WHERE userId = '#{userId}'";
 
-            rs = pstmt.executeQuery();
+		jdbcTemplate.excuteUpdate(updateQuery, user);
+	}
 
-            User user = null;
-            if (rs.next()) {
-                user = new User(rs.getString("userId"), rs.getString("password"), rs.getString("name"),
-                        rs.getString("email"));
-            }
+	public List<User> selectUsers() throws SQLException {
+		log.debug("UserDao selectUsers");
 
-            return user;
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-            if (pstmt != null) {
-                pstmt.close();
-            }
-            if (con != null) {
-                con.close();
-            }
-        }
-    }
+		String selectQuery = "SELECT userId, password, name, email FROM users";
+
+		return jdbcTemplate.excuteQueryForList(selectQuery, resultMap);
+	}
+
+	public User selectUser(String userId) {
+		log.debug("UserDao selectUser userId : {}", userId);
+
+		String selectQuery = "SELECT userId, password, name, email FROM users WHERE userId = '#{userId}'";
+
+		return jdbcTemplate.excuteQueryForObject(selectQuery, resultMap, userId);
+	}
+
 }
