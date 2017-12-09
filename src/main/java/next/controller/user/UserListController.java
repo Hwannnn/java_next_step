@@ -1,13 +1,15 @@
-package next.controller;
+package next.controller.user;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import core.web.view.ModelAndView;
 import next.constant.Session;
+import next.controller.AbstractController;
 import next.dao.UserDao;
 
-public class UserListController implements Controller {
+public class UserListController extends AbstractController {
 	private UserDao userDao;
 	
 	public UserListController() {
@@ -15,17 +17,17 @@ public class UserListController implements Controller {
 	}
 	
 	@Override
-	public String execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public ModelAndView execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		HttpSession session = request.getSession();
 		String loginId = (String) session.getAttribute(Session.LOGIN_ID.value());
 
 		boolean isNotLogined = (loginId == null);
 		if (isNotLogined) {
-			return "redirect:/user/loginForm";
+			return jspView("redirect:/user/loginForm");
 		}
 
 		request.setAttribute("users", userDao.selectUsers());
 
-		return "/user/list.jsp";
+		return jspView("/user/list.jsp");
 	}
 }

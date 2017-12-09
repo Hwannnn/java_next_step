@@ -26,6 +26,8 @@ public class UserDao {
 	}
 
 	public void insertUser(User user) throws SQLException {
+		log.debug("UserDao insertUser user : {}", user);
+		
 		String insertQuery = "INSERT INTO users VALUES ('#{userId}', '#{password}', '#{name}', '#{email}')";
 
 		jdbcTemplate.excuteUpdate(insertQuery, user);

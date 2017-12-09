@@ -1,4 +1,4 @@
-package next.controller;
+package next.controller.user;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -7,11 +7,13 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import core.web.view.ModelAndView;
 import next.constant.CommonView;
+import next.controller.AbstractController;
 import next.dao.UserDao;
 import next.model.User;
 
-public class UserUpdateController implements Controller {
+public class UserUpdateController extends AbstractController {
 	private static final Logger log = LoggerFactory.getLogger(UserUpdateController.class);
 	private UserDao userDao;
 	
@@ -20,7 +22,7 @@ public class UserUpdateController implements Controller {
 	}
 
 	@Override
-	public String execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public ModelAndView execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		HttpSession session = request.getSession();
 		String loginId = (String) session.getAttribute("loginId");
 		String userId = request.getParameter("userId");
@@ -28,7 +30,7 @@ public class UserUpdateController implements Controller {
 		boolean canNotUpdate = (loginId == null) || (userDao.selectUser(loginId) == null);
 
 		if (canNotUpdate) {
-			return CommonView.ERROR_VIEW.value();
+			return jspView(CommonView.ERROR_VIEW.value());
 		}
 
 		String password = request.getParameter("password");
@@ -42,6 +44,6 @@ public class UserUpdateController implements Controller {
 
 		log.debug("Update User : {}", updatedUser);
 
-		return "redirect:/index.jsp";
+		return jspView("redirect:/index");
 	}
 }
