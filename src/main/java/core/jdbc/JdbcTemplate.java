@@ -18,7 +18,7 @@ public class JdbcTemplate {
 	private static final Logger log = LoggerFactory.getLogger(JdbcTemplate.class);
 	private static final String SQL_PARAMETER_PATTERN = "\\{[a-zA-Z]*\\}";
 	
-	public void excuteUpdateById(String sql, String... parameter) {
+	public void excuteUpdate(String sql, String... parameter) {
 		log.debug("JdbcTemplate excuteUpdate sql : {}", sql);
 
 		String replacedSql = setSqlParameter(sql, parameter);
@@ -163,9 +163,9 @@ public class JdbcTemplate {
 	}
 
 	private String combineGetterMethodName(String variableName) {
-		String fisrtLetterCapitalize = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
+		String firstLetterCapitalize = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
 
-		return "get" + fisrtLetterCapitalize;
+		return "get" + firstLetterCapitalize;
 	}
 
 }

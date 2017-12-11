@@ -64,7 +64,7 @@ public class AnswerDao {
 
 		String sql = "DELETE FROM answers WHERE answerId = #{answerId}";
 		
-		jdbcTemplate.excuteUpdateById(sql, answerId + "");
+		jdbcTemplate.excuteUpdate(sql, answerId + "");
 	}
 	
 }
