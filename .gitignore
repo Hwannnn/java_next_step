@@ -1,9 +1,7 @@
-.metadata/
-.recommenders/
-RemoteSystemTempFIles/
-Servers/
-
-**/.classpath
-**/.project
-**/bin
-**/settings/
+/.settings/
+/target/
+/.classpath
+/.project
+/jwp-basic.iml
+/.idea/
+/tomcat.8080/
