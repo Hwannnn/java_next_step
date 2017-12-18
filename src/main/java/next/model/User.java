@@ -5,12 +5,6 @@ public class User {
     private String password;
     private String name;
     private String email;
-    
-    public User(String userId, String name, String email) {
-        this.userId = userId;
-        this.name = name;
-        this.email = email;
-    }
 
     public User(String userId, String password, String name, String email) {
         this.userId = userId;
@@ -50,7 +44,11 @@ public class User {
     }
 
     public boolean isSameUser(User user) {
-        return userId.equals(user.userId);
+        return isSameUser(user.getName());
+    }
+
+    public boolean isSameUser(String newUserName) {
+        return name.equals(newUserName);
     }
 
     @Override

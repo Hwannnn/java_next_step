@@ -1,6 +1,5 @@
 package core.jdbc;
 
-import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,164 +7,97 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import next.dao.ResultMap;
-import next.model.GeneratedKey;
-
 public class JdbcTemplate {
-	private static final Logger log = LoggerFactory.getLogger(JdbcTemplate.class);
-	private static final String SQL_PARAMETER_PATTERN = "\\{[a-zA-Z]*\\}";
-	
-	public void excuteUpdate(String sql, String... parameter) {
-		log.debug("JdbcTemplate excuteUpdate sql : {}", sql);
+    private static JdbcTemplate jdbcTemplate;
 
-		String replacedSql = setSqlParameter(sql, parameter);
+    private JdbcTemplate() {
+    }
 
-		try (Connection connection = ConnectionManager.getConnection();
-			 PreparedStatement preparedStatement = connection.prepareStatement(replacedSql);) {
+    public static JdbcTemplate getInstance() {
+        if (jdbcTemplate == null) {
+            jdbcTemplate = new JdbcTemplate();
+        }
+        return jdbcTemplate;
+    }
 
-			preparedStatement.executeUpdate();
+    public void update(String sql, PreparedStatementSetter pss) throws DataAccessException {
+        try (Connection conn = ConnectionManager.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pss.setParameters(pstmt);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new DataAccessException(e);
+        }
+    }
 
-		} catch (SQLException e) {
-			throw new DataAccessException("JdbcTemplate excuteUpdate sql : " + sql, e);
-		}
-	}
-	
-	public void excuteUpdate(String sql, Object model) {
-		log.debug("JdbcTemplate excuteUpdate sql : ", sql);
-		
-		String replacedSql = setSqlParameter(sql, model);
+    public void update(String sql, Object... parameters) {
+        update(sql, createPreparedStatementSetter(parameters));
+    }
 
-		try (Connection connection = ConnectionManager.getConnection();
-			 PreparedStatement preparedStatement = connection.prepareStatement(replacedSql);) {
+    public void update(PreparedStatementCreator psc, KeyHolder holder) {
+        try (Connection conn = ConnectionManager.getConnection()) {
+            PreparedStatement ps = psc.createPreparedStatement(conn);
+            ps.executeUpdate();
 
-			preparedStatement.executeUpdate();
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                holder.setId(rs.getLong(1));
+            }
+            rs.close();
+        } catch (SQLException e) {
+            throw new DataAccessException(e);
+        }
+    }
 
-		} catch (SQLException e) {
-			throw new DataAccessException("JdbcTemplate excuteUpdate sql : " + sql, e);
-		}
-	}
-	
-	public void excuteUpdate(String sql, Object model, GeneratedKey generatedKey) {
-		log.debug("JdbcTemplate excuteUpdate sql : ", sql);
-		
-		String replacedSql = setSqlParameter(sql, model);
+    public <T> T queryForObject(String sql, RowMapper<T> rm, PreparedStatementSetter pss) {
+        List<T> list = query(sql, rm, pss);
+        if (list.isEmpty()) {
+            return null;
+        }
+        return list.get(0);
+    }
 
-		try (Connection connection = ConnectionManager.getConnection();
-			 PreparedStatement preparedStatement = connection.prepareStatement(replacedSql);) {
-			
-			preparedStatement.executeUpdate();
-			
-			ResultSet resultSet = preparedStatement.getGeneratedKeys();
-			if(resultSet.next()) {
-				generatedKey.setId(resultSet.getInt(1));
-			}
-			
-			resultSet.close();
-			
-		} catch (SQLException e) {
-			throw new DataAccessException("JdbcTemplate excuteUpdate sql : " + sql, e);
-		}
-	}
+    public <T> T queryForObject(String sql, RowMapper<T> rm, Object... parameters) {
+        return queryForObject(sql, rm, createPreparedStatementSetter(parameters));
+    }
 
-	public <T> T excuteQueryForObject(String sql, ResultMap<T> resultMap, String... parameter) {
-		log.debug("JdbcTemplate excuteQuery sql : {}", sql);
+    public <T> List<T> query(String sql, RowMapper<T> rm, PreparedStatementSetter pss) throws DataAccessException {
+        ResultSet rs = null;
+        try (Connection conn = ConnectionManager.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pss.setParameters(pstmt);
+            rs = pstmt.executeQuery();
 
-		String replacedSql = setSqlParameter(sql, parameter);
+            List<T> list = new ArrayList<T>();
+            while (rs.next()) {
+                list.add(rm.mapRow(rs));
+            }
+            return list;
+        } catch (SQLException e) {
+            throw new DataAccessException(e);
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException(e);
+            }
+        }
+    }
 
-		try (Connection connection = ConnectionManager.getConnection();
-			 PreparedStatement preparedStatement = connection.prepareStatement(replacedSql);
-			 ResultSet resultSet = preparedStatement.executeQuery();) {
-			
-			if(resultSet.next() == false) {
-				return null;
-			}
+    public <T> List<T> query(String sql, RowMapper<T> rm, Object... parameters) {
+        return query(sql, rm, createPreparedStatementSetter(parameters));
+    }
 
-			return resultMap.mappingRow(resultSet);
-
-		} catch (SQLException e) {
-			throw new DataAccessException("JdbcTemplate excuteQuery sql : " + replacedSql, e);
-		}
-	}
-	
-	public <T> List<T> excuteQueryForList(String sql, ResultMap<T> resultMap, String... parameter) {
-		log.debug("JdbcTemplate excuteQuery sql : ", sql);
-		
-		List<T> resultModels = new ArrayList<>();
-		String replacedSql = setSqlParameter(sql, parameter);
-		
-		try (Connection connection = ConnectionManager.getConnection();
-			 PreparedStatement preparedStatement = connection.prepareStatement(replacedSql);
-			 ResultSet resultSet = preparedStatement.executeQuery();) {
-
-			while(resultSet.next()) {
-				resultModels.add(resultMap.mappingRow(resultSet));
-			}
-			
-			return resultModels;
-
-		} catch (SQLException e) {
-			throw new DataAccessException("JdbcTemplate excuteQuery sql : " + replacedSql, e);
-		}
-	}
-	
-	@SuppressWarnings("unused")
-	private String setSqlParameter(String sql, String... parameter) {
-		String[] replacedSql = sql.split("#");
-
-		for (int index = 1; index < replacedSql.length; index++) {
-			if (replacedSql[index].indexOf("{") > -1 && replacedSql[index].indexOf("}") > -1) {
-				replacedSql[index] = replacedSql[index].replaceFirst(SQL_PARAMETER_PATTERN, parameter[index - 1]);
-			}
-		}
-
-		return String.join("", replacedSql);
-	}
-
-	private String setSqlParameter(String sql, Object model) {
-		String[] replacedSql = sql.split("#");
-
-		for (int index = 1; index < replacedSql.length; index++) {
-			int preBracketIndex = replacedSql[index].indexOf("{");
-			int postBracketIndex = replacedSql[index].indexOf("}");
-
-			if (preBracketIndex > -1 && preBracketIndex > -1) {
-				String sqlParameter = replacedSql[index].substring(preBracketIndex + 1, postBracketIndex);
-				replacedSql[index] = replacedSql[index].replaceFirst(SQL_PARAMETER_PATTERN, excuteGetterMethod(model, sqlParameter));
-			}
-		}
-
-		return String.join("", replacedSql);
-	}
-	
-	@SuppressWarnings("unused")
-	private String excuteGetterMethod(Object model, String parameter) {
-		String getterMethodValue = null;
-		Class<?> modelClass = model.getClass();
-
-		try {
-			for (Method method : modelClass.getMethods()) {
-				String getterMethodName = combineGetterMethodName(parameter);
-
-				if (getterMethodName.equals(method.getName())) {
-					getterMethodValue = method.invoke(model) + "";
-					break;
-				}
-			}
-
-		} catch (Exception e) {
-			log.debug("JdbcTemplate excuteGetterMethod Error model, parameter : {}, {}", model, parameter, e);
-		}
-
-		return getterMethodValue;
-	}
-
-	private String combineGetterMethodName(String variableName) {
-		String firstLetterCapitalize = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
-
-		return "get" + firstLetterCapitalize;
-	}
-
+    private PreparedStatementSetter createPreparedStatementSetter(Object... parameters) {
+        return new PreparedStatementSetter() {
+            @Override
+            public void setParameters(PreparedStatement pstmt) throws SQLException {
+                for (int i = 0; i < parameters.length; i++) {
+                    pstmt.setObject(i + 1, parameters[i]);
+                }
+            }
+        };
+    }
 }

@@ -4,57 +4,59 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import core.jdbc.JdbcTemplate;
 import next.model.User;
+import core.jdbc.JdbcTemplate;
+import core.jdbc.RowMapper;
 
 public class UserDao {
-	private static final Logger log = LoggerFactory.getLogger(UserDao.class);
-	private JdbcTemplate jdbcTemplate;
-	private ResultMap<User> resultMap = new ResultMap<User>() {
-		@Override
-		public User mappingRow(ResultSet resultSet) throws SQLException {
-			return new User(resultSet.getString("userId"), resultSet.getString("password"), resultSet.getString("name"),
-					resultSet.getString("email"));
-		}
-	};
+    private static UserDao userDao;
+    private JdbcTemplate jdbcTemplate = JdbcTemplate.getInstance();
 
-	public UserDao() {
-		this.jdbcTemplate = new JdbcTemplate();
-	}
+    private UserDao() {
+    }
 
-	public void insertUser(User user) throws SQLException {
-		log.debug("UserDao insertUser user : {}", user);
-		
-		String insertQuery = "INSERT INTO users VALUES ('#{userId}', '#{password}', '#{name}', '#{email}')";
+    public static UserDao getInstance() {
+        if (userDao == null) {
+            userDao = new UserDao();
+        }
+        return userDao;
+    }
 
-		jdbcTemplate.excuteUpdate(insertQuery, user);
-	}
+    public void insert(User user) {
+        String sql = "INSERT INTO USERS VALUES (?, ?, ?, ?)";
+        jdbcTemplate.update(sql, user.getUserId(), user.getPassword(), user.getName(), user.getEmail());
+    }
 
-	public void updateUser(User user) throws SQLException {
-		log.debug("UserDao updateUser {}" + user);
+    public User findByUserId(String userId) {
+        String sql = "SELECT userId, password, name, email FROM USERS WHERE userid=?";
 
-		String updateQuery = "UPDATE users SET password = '#{password}', name = '#{name}', email = '#{email}' WHERE userId = '#{userId}'";
+        RowMapper<User> rm = new RowMapper<User>() {
+            @Override
+            public User mapRow(ResultSet rs) throws SQLException {
+                return new User(rs.getString("userId"), rs.getString("password"), rs.getString("name"),
+                        rs.getString("email"));
+            }
+        };
 
-		jdbcTemplate.excuteUpdate(updateQuery, user);
-	}
+        return jdbcTemplate.queryForObject(sql, rm, userId);
+    }
 
-	public List<User> selectUsers() throws SQLException {
-		log.debug("UserDao selectUsers");
+    public List<User> findAll() throws SQLException {
+        String sql = "SELECT userId, password, name, email FROM USERS";
 
-		String selectQuery = "SELECT userId, password, name, email FROM users";
+        RowMapper<User> rm = new RowMapper<User>() {
+            @Override
+            public User mapRow(ResultSet rs) throws SQLException {
+                return new User(rs.getString("userId"), rs.getString("password"), rs.getString("name"),
+                        rs.getString("email"));
+            }
+        };
 
-		return jdbcTemplate.excuteQueryForList(selectQuery, resultMap);
-	}
+        return jdbcTemplate.query(sql, rm);
+    }
 
-	public User selectUser(String userId) {
-		log.debug("UserDao selectUser userId : {}", userId);
-
-		String selectQuery = "SELECT userId, password, name, email FROM users WHERE userId = '#{userId}'";
-
-		return jdbcTemplate.excuteQueryForObject(selectQuery, resultMap, userId);
-	}
-
+    public void update(User user) {
+        String sql = "UPDATE USERS set password = ?, name = ?, email = ? WHERE userId = ?";
+        jdbcTemplate.update(sql, user.getPassword(), user.getName(), user.getEmail(), user.getUserId());
+    }
 }
